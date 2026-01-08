@@ -1,0 +1,20 @@
+{
+  "id": "taste-dees",
+  "name": "Taste-Dees",
+  "description": "A premium t-shirt e-commerce website with bold design, dark mode support, and smooth animations. Built with Next.js 16, TypeScript, and Tailwind CSS.",
+  "version": "0.1.0",
+  "type": "web",
+  "icon": "👕",
+  "category": "ecommerce",
+  
+  "web": {
+    "enabled": true,
+    "entry": "package.json",
+    "port": 3000,
+    "framework": "nextjs",
+    "requirements": "package.json",
+    "command": ["npm", "run", "dev"]
+  },
+  
+  "tags": ["ecommerce", "nextjs", "typescript", "tailwind", "tshirts", "fashion"]
+}
