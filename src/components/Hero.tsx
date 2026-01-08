@@ -1,9 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+import { products } from "@/data/products";
 
 export default function Hero() {
+  const { addToCart } = useCart();
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Get the featured product (My Eyes Are Right Here - id: 0)
+  const featuredProduct = products.find(p => p.id === "0");
+
+  const handleBuyNow = () => {
+    if (!featuredProduct) return;
+    
+    addToCart(featuredProduct, featuredProduct.colors[0], featuredProduct.sizes[0]);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
+
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden noise-bg">
       {/* Background Pattern */}
@@ -98,7 +115,17 @@ export default function Hero() {
                 <p className="text-white text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
                   MY EYES ARE RIGHT HERE
                 </p>
-                <p className="text-white/70 text-sm">The Statement Collection</p>
+                <p className="text-white/70 text-sm mb-3">The Statement Collection</p>
+                <button 
+                  onClick={handleBuyNow}
+                  className={`w-full py-3 rounded-full font-bold text-sm transition-all ${
+                    showSuccess 
+                      ? 'bg-secondary text-white' 
+                      : 'bg-accent text-white hover:bg-accent-light hover:scale-[1.02]'
+                  }`}
+                >
+                  {showSuccess ? '✓ Added to Cart!' : 'Add to Cart — $35'}
+                </button>
               </div>
             </div>
           </div>
