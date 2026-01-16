@@ -1,12 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
+interface AuthUser {
+  username: string;
+  role: 'super_admin' | 'admin';
+}
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const { itemCount } = useCart();
+
+  // Check if user is admin
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      }
+    }
+    checkAuth();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-card-border">
@@ -39,10 +63,28 @@ export default function Navbar() {
             Contact
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
           </Link>
+          {user && (
+            <Link href="/admin" className="relative text-foreground hover:text-accent transition-colors group">
+              Admin
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full" />
+            </Link>
+          )}
         </div>
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
+          {/* Logged in user */}
+          {user && (
+            <div className="hidden md:flex items-center gap-2 text-sm">
+              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-accent">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+              </div>
+              <span className="text-foreground font-medium">{user.username}</span>
+            </div>
+          )}
+
           {/* Search */}
           <button className="p-2 hover:bg-card-border/50 rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -93,6 +135,21 @@ export default function Navbar() {
           <Link href="/contact" className="block text-foreground hover:text-accent transition-colors">
             Contact
           </Link>
+          {user && (
+            <>
+              <Link href="/admin" className="block text-foreground hover:text-accent transition-colors">
+                Admin
+              </Link>
+              <div className="flex items-center gap-2 pt-2 border-t border-card-border">
+                <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 text-accent">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                  </svg>
+                </div>
+                <span className="text-sm text-muted">{user.username}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

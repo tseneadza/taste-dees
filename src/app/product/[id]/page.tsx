@@ -1,34 +1,55 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, notFound } from "next/navigation";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { products } from "@/data/products";
+import ImageCarousel from "@/components/ImageCarousel";
+import { Product } from "@/types/product";
 import { useCart } from "@/context/CartContext";
 
 export default function ProductPage() {
   const params = useParams();
   const productId = params.id as string;
-  
-  const product = products.find((p) => p.id === productId);
-  
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const { addToCart } = useCart();
-  const [selectedColor, setSelectedColor] = useState(product?.colors[0] || "");
-  const [selectedSize, setSelectedSize] = useState(product?.sizes[0] || "");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  if (!product) {
-    notFound();
-  }
+  // Fetch product
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const response = await fetch(`/api/products/${productId}`);
+        const data = await response.json();
+        if (data.success && data.product) {
+          setProduct(data.product);
+          setSelectedColor(data.product.colors[0] || "");
+          setSelectedSize(data.product.sizes[0] || "");
+        } else {
+          setError("Product not found");
+        }
+      } catch (err) {
+        setError("Failed to load product");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [productId]);
 
   const handleAddToCart = () => {
+    if (!product) return;
     setIsAdding(true);
     addToCart(product, selectedColor, selectedSize);
-    
+
     setShowSuccess(true);
     setTimeout(() => {
       setIsAdding(false);
@@ -36,10 +57,49 @@ export default function ProductPage() {
     }, 2000);
   };
 
+  if (isLoading) {
+    return (
+      <main className="min-h-screen relative">
+        <Navbar />
+        <section className="pt-32 pb-16 md:pt-40 md:pb-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+              <div className="aspect-[3/4] bg-card-border rounded-3xl animate-pulse" />
+              <div className="space-y-4">
+                <div className="h-4 bg-card-border rounded w-1/4" />
+                <div className="h-12 bg-card-border rounded w-3/4" />
+                <div className="h-8 bg-card-border rounded w-1/3" />
+                <div className="h-24 bg-card-border rounded" />
+              </div>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <main className="min-h-screen relative">
+        <Navbar />
+        <section className="pt-32 pb-16 md:pt-40 md:pb-24">
+          <div className="max-w-7xl mx-auto px-6 text-center">
+            <h1 className="text-2xl mb-4">{error || "Product not found"}</h1>
+            <Link href="/shop" className="text-accent hover:underline">
+              Back to Shop
+            </Link>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen relative">
       <Navbar />
-      
+
       <section className="pt-32 pb-16 md:pt-40 md:pb-24">
         <div className="max-w-7xl mx-auto px-6">
           {/* Breadcrumb */}
@@ -58,8 +118,8 @@ export default function ProductPage() {
           </nav>
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-            {/* Product Image */}
-            <div className="relative aspect-[3/4] bg-card-bg rounded-3xl overflow-hidden border border-card-border">
+            {/* Product Images */}
+            <div className="relative">
               {/* Badges */}
               <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
                 {product.isNew && (
@@ -73,25 +133,7 @@ export default function ProductPage() {
                 )}
               </div>
 
-            {/* Product Image */}
-            {product.image ? (
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                className="object-cover object-top"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary/5 to-accent/5">
-                <div className="w-32 h-32 rounded-full bg-accent/10 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16 text-accent/50">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                  </svg>
-                </div>
-              </div>
-            )}
+              <ImageCarousel images={product.images || []} alt={product.name} />
             </div>
 
             {/* Product Info */}
@@ -99,8 +141,8 @@ export default function ProductPage() {
               <div className="mb-2">
                 <span className="text-accent font-medium tracking-wide text-sm">{product.category}</span>
               </div>
-              
-              <h1 
+
+              <h1
                 className="text-4xl md:text-5xl lg:text-6xl mb-4"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
@@ -127,8 +169,8 @@ export default function ProductPage() {
                       key={index}
                       onClick={() => setSelectedColor(color)}
                       className={`w-10 h-10 rounded-full border-2 transition-all ${
-                        selectedColor === color 
-                          ? 'border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background' 
+                        selectedColor === color
+                          ? 'border-foreground ring-2 ring-foreground ring-offset-2 ring-offset-background'
                           : 'border-card-border hover:border-muted'
                       }`}
                       style={{ backgroundColor: color }}
@@ -161,7 +203,7 @@ export default function ProductPage() {
               {/* Stock Status */}
               <div className="mb-6">
                 {product.stock > 0 ? (
-                  <span className="text-secondary text-sm font-medium">✓ In Stock ({product.stock} available)</span>
+                  <span className="text-secondary text-sm font-medium">In Stock ({product.stock} available)</span>
                 ) : (
                   <span className="text-red-500 text-sm font-medium">Out of Stock</span>
                 )}
@@ -179,18 +221,18 @@ export default function ProductPage() {
                     : 'bg-accent text-white hover:bg-accent-light hover:scale-[1.02]'
                 }`}
               >
-                {showSuccess ? '✓ Added to Cart!' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                {showSuccess ? 'Added to Cart!' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
               </button>
 
               {/* Quick Links */}
               <div className="mt-6 flex gap-4">
-                <Link 
+                <Link
                   href="/cart"
                   className="flex-1 py-3 text-center border-2 border-foreground rounded-full font-medium hover:bg-foreground hover:text-background transition-colors"
                 >
                   View Cart
                 </Link>
-                <Link 
+                <Link
                   href="/shop"
                   className="flex-1 py-3 text-center text-muted hover:text-accent transition-colors"
                 >

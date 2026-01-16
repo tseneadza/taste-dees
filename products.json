@@ -1,0 +1,101 @@
+[
+  {
+    "id": "prod_0_1768526173388",
+    "name": "My Eyes Are Right Here",
+    "price": 25,
+    "category": "Statement Collection",
+    "colors": [
+      "#1A1614",
+      "#F5F0EB",
+      "#C84B31"
+    ],
+    "description": "The ultimate statement piece. Bold, confident, and unapologetically direct. Perfect for making your point heard without saying a word.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "stock": 20,
+    "isNew": true,
+    "isBestseller": true,
+    "images": [
+      "/images/featured-tee.png"
+    ],
+    "createdAt": "2026-01-16T01:16:13.388Z",
+    "updatedAt": "2026-01-16T01:29:15.858Z"
+  },
+  {
+    "id": "prod_1768457627511",
+    "name": "I see what you are looking at!",
+    "price": 25,
+    "category": "New Arrivals",
+    "colors": [
+      "#1A1614",
+      "#F5F0EB"
+    ],
+    "description": "Eyes looking back at the viewer and words conveying \"I see what you're looking at!\"",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "stock": 50,
+    "isNew": true,
+    "images": [
+      "/images/products/1768457490520-d6b882f3-a2a7-487e-8b9d-ee7bac83a9221105c.jpeg"
+    ],
+    "createdAt": "2026-01-16T01:16:13.388Z",
+    "updatedAt": "2026-01-16T01:16:13.388Z"
+  },
+  {
+    "id": "prod_1768460522014",
+    "name": "I got my eyes on you!",
+    "price": 25,
+    "category": "New Arrivals",
+    "colors": [
+      "#1A1614",
+      "#F5F0EB"
+    ],
+    "description": "Custom tshirt that expresses that you see what they are looking at.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "stock": 50,
+    "isNew": true,
+    "images": [
+      "/images/products/1768460448072-e46a23bc-ea9f-4f17-ab19-fdc8da8d83521105c.jpeg"
+    ],
+    "createdAt": "2026-01-16T01:16:13.388Z",
+    "updatedAt": "2026-01-16T01:16:13.388Z"
+  },
+  {
+    "id": "prod_1768460661912",
+    "name": "What color are my eyes?",
+    "price": 25,
+    "category": "New Arrivals",
+    "colors": [
+      "#1A1614",
+      "#F5F0EB"
+    ],
+    "description": "Custom shirt that let's the viewer know that you are not looking at them in the eyes.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "stock": 50,
+    "isNew": true,
+    "images": [
+      "/images/products/1768460582094-321ebcb0-cfeb-4b99-aa54-421ea463578e1105c.jpeg"
+    ],
+    "createdAt": "2026-01-16T01:16:13.388Z",
+    "updatedAt": "2026-01-16T01:16:13.388Z"
+  }
+]

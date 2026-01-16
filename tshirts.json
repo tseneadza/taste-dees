@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1768457627511,
+    "name": "I see what you are looking at!",
+    "description": "Eyes looking back at the viewer and words conveying \"I see what you're looking at!\"",
+    "price": 25,
+    "image": "/images/products/1768457490520-d6b882f3-a2a7-487e-8b9d-ee7bac83a9221105c.jpeg"
+  },
+  {
+    "id": 1768460522014,
+    "name": "I got my eyes on you!",
+    "description": "Custom tshirt that expresses that you see what they are looking at.",
+    "price": 25,
+    "image": "/images/products/1768460448072-e46a23bc-ea9f-4f17-ab19-fdc8da8d83521105c.jpeg",
+    "category": "New Arrivals"
+  },
+  {
+    "id": 1768460661912,
+    "name": "What color are my eyes?",
+    "description": "Custom shirt that let's the viewer know that you are not looking at them in the eyes.",
+    "price": 25,
+    "image": "/images/products/1768460582094-321ebcb0-cfeb-4b99-aa54-421ea463578e1105c.jpeg",
+    "category": "New Arrivals"
+  }
+]

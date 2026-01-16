@@ -1,27 +1,52 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { Product } from "@/types/product";
 
 type SortOption = "featured" | "price-low" | "price-high" | "newest";
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const cats = Array.from(new Set(products.map((p) => p.category)));
-    return ["all", ...cats];
+  // Fetch products from API
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        if (data.success) {
+          setProducts(data.products);
+        }
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProducts();
   }, []);
 
-  // Filter and sort products
+  // Filter to only products with valid images (visible products)
+  const visibleProducts = useMemo(() => {
+    return products.filter((p) => p.images && p.images.length > 0 && p.images[0].trim() !== '');
+  }, [products]);
+
+  // Get unique categories from visible products only
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(visibleProducts.map((p) => p.category)));
+    return ["all", ...cats];
+  }, [visibleProducts]);
+
+  // Filter and sort products (from visible products)
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter((product) => {
+    let filtered = visibleProducts.filter((product) => {
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       return matchesCategory && matchesPrice;
@@ -43,16 +68,16 @@ export default function ShopPage() {
     });
 
     return filtered;
-  }, [selectedCategory, sortBy, priceRange]);
+  }, [visibleProducts, selectedCategory, sortBy, priceRange]);
 
   return (
     <main className="min-h-screen relative">
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="pt-32 pb-12 md:pt-40 md:pb-16 bg-gradient-to-b from-secondary/5 to-transparent">
         <div className="max-w-7xl mx-auto px-6">
-          <h1 
+          <h1
             className="text-5xl md:text-6xl lg:text-7xl mb-4"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
@@ -143,11 +168,22 @@ export default function ShopPage() {
             <div className="flex-1">
               <div className="mb-6 flex items-center justify-between">
                 <p className="text-muted">
-                  Showing {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
+                  {isLoading ? "Loading..." : `Showing ${filteredProducts.length} ${filteredProducts.length === 1 ? "product" : "products"}`}
                 </p>
               </div>
 
-              {filteredProducts.length > 0 ? (
+              {isLoading ? (
+                /* Loading skeleton */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="aspect-[3/4] bg-card-border rounded-2xl mb-4" />
+                      <div className="h-4 bg-card-border rounded w-3/4 mb-2" />
+                      <div className="h-4 bg-card-border rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />

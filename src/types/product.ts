@@ -10,7 +10,9 @@ export interface Product {
   stock: number;
   isNew?: boolean;
   isBestseller?: boolean;
-  image?: string;
+  images: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem {

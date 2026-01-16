@@ -12,7 +12,7 @@ export const products: Product[] = [
     stock: 100,
     isNew: true,
     isBestseller: true,
-    image: "/images/featured-tee.png",
+    images: ["/images/featured-tee.png"],
   },
   {
     id: "1",
@@ -24,6 +24,7 @@ export const products: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     stock: 50,
     isNew: true,
+    images: [],
   },
   {
     id: "2",
@@ -36,6 +37,7 @@ export const products: Product[] = [
     sizes: ["S", "M", "L", "XL"],
     stock: 30,
     isBestseller: true,
+    images: [],
   },
   {
     id: "3",
@@ -46,6 +48,7 @@ export const products: Product[] = [
     description: "Vintage-inspired design with warm sunset tones. Takes you back to the golden era.",
     sizes: ["S", "M", "L", "XL", "XXL"],
     stock: 45,
+    images: [],
   },
   {
     id: "4",
@@ -57,6 +60,7 @@ export const products: Product[] = [
     sizes: ["M", "L", "XL"],
     stock: 25,
     isNew: true,
+    images: [],
   },
   {
     id: "5",
@@ -67,6 +71,7 @@ export const products: Product[] = [
     description: "Bold geometric patterns that create visual harmony. A statement piece for the modern dresser.",
     sizes: ["S", "M", "L", "XL"],
     stock: 40,
+    images: [],
   },
   {
     id: "6",
@@ -79,6 +84,7 @@ export const products: Product[] = [
     sizes: ["M", "L", "XL", "XXL"],
     stock: 20,
     isBestseller: true,
+    images: [],
   },
   {
     id: "7",
@@ -89,6 +95,7 @@ export const products: Product[] = [
     description: "Legendary street style that never goes out of fashion. An instant classic.",
     sizes: ["S", "M", "L", "XL"],
     stock: 55,
+    images: [],
   },
   {
     id: "8",
@@ -100,6 +107,7 @@ export const products: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     stock: 60,
     isNew: true,
+    images: [],
   },
   {
     id: "9",
@@ -110,6 +118,7 @@ export const products: Product[] = [
     description: "Electric vibes and neon aesthetics. Stand out in the urban jungle.",
     sizes: ["M", "L", "XL"],
     stock: 35,
+    images: [],
   },
   {
     id: "10",
@@ -121,6 +130,7 @@ export const products: Product[] = [
     description: "Light and breezy design inspired by coastal living. Effortless style for any occasion.",
     sizes: ["S", "M", "L", "XL"],
     stock: 45,
+    images: [],
   },
   {
     id: "11",
@@ -132,6 +142,7 @@ export const products: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     stock: 30,
     isBestseller: true,
+    images: [],
   },
   {
     id: "12",
@@ -142,5 +153,6 @@ export const products: Product[] = [
     description: "Organic patterns inspired by nature. Connect with the earth through design.",
     sizes: ["M", "L", "XL"],
     stock: 40,
+    images: [],
   },
 ];

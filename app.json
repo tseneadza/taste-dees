@@ -10,7 +10,7 @@
   "web": {
     "enabled": true,
     "entry": "package.json",
-    "port": 3000,
+    "port": 3002,
     "framework": "nextjs",
     "requirements": "package.json",
     "command": ["npm", "run", "dev"]

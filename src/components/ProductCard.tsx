@@ -70,9 +70,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         {/* Product Image */}
-        {product.image ? (
+        {product.images && product.images.length > 0 ? (
           <Image
-            src={product.image}
+            src={product.images[0]}
             alt={product.name}
             fill
             className="object-cover object-top transition-transform group-hover:scale-105"
