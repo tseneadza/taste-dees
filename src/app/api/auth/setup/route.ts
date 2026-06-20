@@ -1,36 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
-import {
-  hasAnyUsers,
-  createUser,
-  createToken,
-  setAuthCookie,
-} from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 
-export async function POST(request: NextRequest) {
+// Check if setup is needed (no admin users exist)
+export async function GET() {
   try {
-    // Check if setup is allowed (no users exist)
-    const usersExist = await hasAnyUsers();
-    if (usersExist) {
-      return NextResponse.json(
-        { success: false, error: 'Setup already completed' },
-        { status: 403 }
-      );
+    const supabase = createAdminClient();
+
+    // List users and check if any have admin role
+    const { data: { users }, error } = await supabase.auth.admin.listUsers();
+
+    if (error) {
+      console.error('Error checking users:', error);
+      // If we can't check, assume setup is needed
+      return NextResponse.json({ setupRequired: true });
     }
 
-    const body = await request.json();
-    const { username, password } = body;
+    const adminExists = users?.some(
+      (u) => u.user_metadata?.role === 'admin' || u.user_metadata?.role === 'super_admin'
+    );
 
-    // Validate input
-    if (!username || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Username and password are required' },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json({ setupRequired: !adminExists });
+  } catch (error) {
+    console.error('Setup check error:', error);
+    return NextResponse.json({ setupRequired: true });
+  }
+}
 
-    if (username.length < 3) {
+// Create the first super admin
+export async function POST(request: Request) {
+  try {
+    const { email, password, username } = await request.json();
+
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Username must be at least 3 characters' },
+        { success: false, error: 'Email and password are required' },
         { status: 400 }
       );
     }
@@ -42,42 +45,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create super admin user
-    const user = await createUser(username, password, 'super_admin');
+    const adminSupabase = createAdminClient();
 
-    // Create token and set cookie
-    const token = createToken({
-      userId: user.id,
-      username: user.username,
-      role: user.role,
+    // Check if any admin users already exist
+    const { data: { users } } = await adminSupabase.auth.admin.listUsers();
+    const adminExists = users?.some(
+      (u) => u.user_metadata?.role === 'admin' || u.user_metadata?.role === 'super_admin'
+    );
+
+    if (adminExists) {
+      return NextResponse.json(
+        { success: false, error: 'Setup already completed. An admin user already exists.' },
+        { status: 400 }
+      );
+    }
+
+    // Create the super admin user
+    const { data, error } = await adminSupabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        username: username || email.split('@')[0],
+        role: 'super_admin',
+      },
     });
-    await setAuthCookie(token);
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Sign in the new user
+    const supabase = await createClient();
+    await supabase.auth.signInWithPassword({ email, password });
 
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
+        id: data.user.id,
+        email: data.user.email,
+        username: username || email.split('@')[0],
+        role: 'super_admin',
       },
     });
   } catch (error) {
     console.error('Setup error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create admin account' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const usersExist = await hasAnyUsers();
-    return NextResponse.json({ setupRequired: !usersExist });
-  } catch (error) {
-    console.error('Setup check error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to check setup status' },
+      { success: false, error: 'Setup failed' },
       { status: 500 }
     );
   }

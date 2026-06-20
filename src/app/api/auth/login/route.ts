@@ -1,56 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
-import {
-  getUserByUsername,
-  verifyPassword,
-  createToken,
-  setAuthCookie,
-} from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { username, password } = body;
+    const { email, password } = await request.json();
 
-    // Validate input
-    if (!username || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Username and password are required' },
+        { success: false, error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    // Find user
-    const user = await getUserByUsername(username);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid username or password' },
-        { status: 401 }
-      );
-    }
+    const supabase = await createClient();
 
-    // Verify password
-    const isValid = await verifyPassword(password, user.passwordHash);
-    if (!isValid) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid username or password' },
-        { status: 401 }
-      );
-    }
-
-    // Create token and set cookie
-    const token = createToken({
-      userId: user.id,
-      username: user.username,
-      role: user.role,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-    await setAuthCookie(token);
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has admin role
+    const role = data.user.user_metadata?.role;
+    if (role !== 'admin' && role !== 'super_admin') {
+      // Sign out non-admin users
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { success: false, error: 'Access denied. Admin privileges required.' },
+        { status: 403 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
+        id: data.user.id,
+        email: data.user.email,
+        username: data.user.user_metadata?.username || data.user.email?.split('@')[0],
+        role: role,
       },
     });
   } catch (error) {

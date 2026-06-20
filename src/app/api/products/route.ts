@@ -1,40 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { createClient } from '@/lib/supabase/server';
+import { dbProductToProduct } from '@/lib/supabase/types';
 import { Product } from '@/types/product';
-import { products as hardcodedProducts } from '@/data/products';
-import { getCurrentUser } from '@/lib/auth';
 
-const PRODUCTS_FILE = path.resolve(process.cwd(), 'products.json');
-const OLD_TSHIRTS_FILE = path.resolve(process.cwd(), 'tshirts.json');
-
-interface OldTshirtItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category?: string;
-}
-
-interface OldProduct {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  category: string;
-  colors: string[];
-  description: string;
-  sizes: string[];
-  stock: number;
-  isNew?: boolean;
-  isBestseller?: boolean;
-  image?: string;
-}
-
-/**
- * Validate if an image path is valid for the web
- */
 function isValidImagePath(image: string | undefined): boolean {
   if (!image) return false;
   if (image.startsWith('file://')) return false;
@@ -44,101 +12,23 @@ function isValidImagePath(image: string | undefined): boolean {
   return false;
 }
 
-/**
- * Migrate old data format to new format
- */
-async function migrateProducts(): Promise<Product[]> {
-  const now = new Date().toISOString();
-  const products: Product[] = [];
-
-  // Migrate hardcoded products
-  for (const oldProduct of hardcodedProducts as OldProduct[]) {
-    const images: string[] = [];
-    if (isValidImagePath(oldProduct.image)) {
-      images.push(oldProduct.image!);
-    }
-
-    products.push({
-      id: `prod_${oldProduct.id}_${Date.now()}`,
-      name: oldProduct.name,
-      price: oldProduct.price,
-      originalPrice: oldProduct.originalPrice,
-      category: oldProduct.category,
-      colors: oldProduct.colors,
-      description: oldProduct.description,
-      sizes: oldProduct.sizes,
-      stock: oldProduct.stock,
-      isNew: oldProduct.isNew,
-      isBestseller: oldProduct.isBestseller,
-      images,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-
-  // Try to migrate tshirts.json if it exists
-  try {
-    const raw = await fs.readFile(OLD_TSHIRTS_FILE, 'utf8');
-    const tshirtsList: OldTshirtItem[] = JSON.parse(raw || '[]');
-
-    for (const item of tshirtsList) {
-      const images: string[] = [];
-      if (isValidImagePath(item.image)) {
-        images.push(item.image);
-      }
-
-      products.push({
-        id: `prod_${item.id}`,
-        name: item.name,
-        price: item.price,
-        category: item.category || 'New Arrivals',
-        colors: ['#1A1614', '#F5F0EB'],
-        description: item.description,
-        sizes: ['S', 'M', 'L', 'XL'],
-        stock: 50,
-        isNew: true,
-        images,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-  } catch {
-    // tshirts.json doesn't exist, that's fine
-  }
-
-  return products;
-}
-
-/**
- * Get all products, migrating if necessary
- */
-async function getProducts(): Promise<Product[]> {
-  try {
-    const raw = await fs.readFile(PRODUCTS_FILE, 'utf8');
-    return JSON.parse(raw || '[]');
-  } catch {
-    // products.json doesn't exist, need to migrate
-    console.log('Migrating products to products.json...');
-    const products = await migrateProducts();
-    await saveProducts(products);
-    console.log(`Migrated ${products.length} products`);
-    return products;
-  }
-}
-
-/**
- * Save products to file
- */
-async function saveProducts(products: Product[]): Promise<void> {
-  await fs.writeFile(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf8');
-}
-
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source');
 
-    const allProducts = await getProducts();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    const allProducts = products.map(dbProductToProduct);
 
     // If source=admin, return all products (for admin management)
     if (source === 'admin') {
@@ -152,27 +42,30 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, products: visibleProducts });
   } catch (error) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch products' },
-      { status: 500 }
-    );
+    console.error('Error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Check auth
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const supabase = await createClient();
+
+    // Check if user is authenticated and is admin
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check user role from metadata
+    const role = user.user_metadata?.role;
+    if (role !== 'admin' && role !== 'super_admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { name, description, price, category, images, colors, sizes, stock, isNew, isBestseller } = body;
+    const { name, description, price, category, images, colors, sizes, stock, isNew, isBestseller, originalPrice } = body;
 
     // Validate required fields
     if (!name || !description || price === undefined) {
@@ -182,33 +75,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const now = new Date().toISOString();
-    const newProduct: Product = {
-      id: `prod_${Date.now()}`,
+    const productData = {
       name: String(name),
       description: String(description),
       price: Number(price),
+      original_price: originalPrice ? Number(originalPrice) : null,
       category: String(category || 'New Arrivals'),
       images: Array.isArray(images) ? images.filter(isValidImagePath) : [],
       colors: Array.isArray(colors) ? colors : ['#1A1614', '#F5F0EB'],
       sizes: Array.isArray(sizes) ? sizes : ['S', 'M', 'L', 'XL'],
       stock: Number(stock) || 50,
-      isNew: Boolean(isNew),
-      isBestseller: Boolean(isBestseller),
-      createdAt: now,
-      updatedAt: now,
+      is_new: Boolean(isNew),
+      is_bestseller: Boolean(isBestseller),
     };
 
-    const products = await getProducts();
-    products.push(newProduct);
-    await saveProducts(products);
+    const { data, error } = await supabase
+      .from('products')
+      .insert(productData)
+      .select()
+      .single();
 
-    return NextResponse.json({ success: true, product: newProduct });
+    if (error) {
+      console.error('Error creating product:', error);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, product: dbProductToProduct(data) });
   } catch (error) {
-    console.error('Error creating product:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create product' },
-      { status: 500 }
-    );
+    console.error('Error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500 });
   }
 }

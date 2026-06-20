@@ -9,11 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@paypal/paypal-server-sdk": "^2.1.0",
+    "@paypal/react-paypal-js": "^8.9.2",
+    "@stripe/stripe-js": "^8.6.1",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.90.1",
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "stripe": "^20.1.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
