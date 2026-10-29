@@ -4,17 +4,38 @@
   "description": "A premium t-shirt e-commerce website with bold design, dark mode support, and smooth animations. Built with Next.js 16, TypeScript, and Tailwind CSS.",
   "version": "0.1.0",
   "type": "web",
-  "icon": "👕",
+  "icon": "\ud83d\udc55",
   "category": "ecommerce",
-  
   "web": {
     "enabled": true,
     "entry": "package.json",
     "port": 3002,
     "framework": "nextjs",
     "requirements": "package.json",
-    "command": ["npm", "run", "dev"]
+    "command": [
+      "npm",
+      "run",
+      "dev"
+    ]
   },
-  
-  "tags": ["ecommerce", "nextjs", "typescript", "tailwind", "tshirts", "fashion"]
+  "tags": [
+    "ecommerce",
+    "nextjs",
+    "typescript",
+    "tailwind",
+    "tshirts",
+    "fashion"
+  ],
+  "scripts": [
+    {
+      "name": "next-env.d",
+      "path": "next-env.d.ts",
+      "description": "Script: next-env.d.ts"
+    },
+    {
+      "name": "next.config",
+      "path": "next.config.ts",
+      "description": "Script: next.config.ts"
+    }
+  ]
 }
